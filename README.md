@@ -1,62 +1,72 @@
-# Rezeptify
+```markdown
+# Rezept-App für KI-generierte Rezepte
 
 ## Überblick
-Rezeptify ist eine innovative App, die KI-generierte Rezeptvorschläge bietet. Nutzer können neue und kreative Gerichte entdecken, Rezepte nach vegetarischen oder glutenfreien Optionen filtern und jedes Rezept mit einer Sternebewertung versehen. Die Plattform zielt darauf ab, Kochinteressierten eine personalisierte und vielseitige Kocherfahrung zu bieten.
+Die Rezept-App ermöglicht Nutzern, KI-generierte Rezepte zu entdecken, nach spezifischen Ernährungspräferenzen (vegetarisch, glutenfrei) zu filtern und Rezepte zu bewerten. Die durchschnittliche Bewertung wird prominent angezeigt, um Nutzern eine schnelle Einschätzung der Beliebtheit und Qualität eines Rezepts zu ermöglichen.
 
 ## Features
-- **KI-generierte Rezeptvorschläge**: Entdecke dynamisch generierte Rezepte, die bei jedem Aufruf variieren.
-- **Detaillierte Rezeptansicht**: Erhalte umfassende Informationen zu jedem Rezept, inklusive Titel, Beschreibung, Zutatenliste und Zubereitungsschritten.
-- **Filteroptionen**: Filtere Rezepte nach "Vegetarisch" und "Glutenfrei", um diätetischen Präferenzen gerecht zu werden.
-- **Rezeptbewertung**: Bewerte Rezepte mit 1 bis 5 Sternen, um anderen Nutzern bei der Auswahl zu helfen und Feedback zu geben.
+- KI-generierte Rezeptvorschläge mit Namen, Beschreibung, Zutaten und Zubereitungsanleitung.
+- Filteroptionen für vegetarische Rezepte.
+- Filteroptionen für glutenfreie Rezepte.
+- Möglichkeit, Rezepte mit 1 bis 5 Sternen zu bewerten.
+- Anzeige der durchschnittlichen Sternebewertung neben der Rezept-Überschrift.
+- Aktualisierung der durchschnittlichen Bewertung in Echtzeit nach neuen Bewertungen.
 
 ## Architektur
-### Überblick
-Die Systemarchitektur von Rezeptify basiert auf einer modernen, serverlosen Infrastruktur. Sie nutzt Supabase für Backend-Funktionalität und Datenbankmanagement, während das Frontend mit React, TypeScript und TailwindCSS entwickelt wird. Externe KI-Dienste werden für die Rezeptgenerierung integriert.
+Die Anwendung folgt einer modernen, serverlosen Architektur, die auf den folgenden Komponenten basiert:
 
-### Komponenten
 - **Frontend**: React + TypeScript + TailwindCSS
-  - Verantwortlich für die Darstellung der Benutzeroberfläche, Interaktion mit dem Benutzer und Kommunikation mit dem Backend.
-  - Implementiert Filterfunktionen und die Anzeige von Rezeptdetails sowie die Bewertungsmechanik.
+  - Verantwortlich für die Darstellung der Benutzeroberfläche.
+  - Interagiert über APIs mit dem Backend.
+  - Implementiert die Filterlogik und die Anzeige von Rezepten sowie deren Bewertungen.
 - **Backend**: Supabase Edge Functions
-  - Stellt die API-Endpunkte für das Frontend bereit.
-  - Verwaltet die Logik zur Generierung von Rezepten (Anbindung an KI-Dienst), Filterung und Speicherung von Bewertungen.
-  - Nutzt Supabase Authentication für potenzielle zukünftige Benutzerverwaltung.
+  - Bietet serverlose API-Endpunkte.
+  - Verwaltet die Logik für Rezeptabrufe, Filterung, Bewertung und die Integration mit externen KI-Diensten.
 - **Datenbank**: PostgreSQL (Supabase)
-  - Speichert Rezeptinformationen (Titel, Beschreibung, Zutaten, Zubereitung, Bild-URL, KI-generiert, vegetarisch, glutenfrei).
-  - Speichert Benutzerbewertungen für Rezepte.
-- **KI-Dienst (extern)**: GPT-Modell (oder ähnliches)
-  - Wird vom Backend über eine API angesprochen, um Rezeptvorschläge basierend auf Anfragen zu generieren.
+  - Speichert alle Anwendungsdaten: Rezepte, Zutaten, Anleitungen, Bewertungen und Benutzerdaten.
+  - Nutzt Supabase Realtime für Echtzeit-Updates von Bewertungen.
+- **KI-Service**: Externe AI API (z.B. OpenAI GPT-4)
+  - Generiert Rezeptvorschläge basierend auf Prompts.
+  - Wird über eine Supabase Edge Function aufgerufen.
 
 ## Installation
-```bash
-npm install
-npm run dev
-```
+Um das Projekt lokal einzurichten und auszuführen, folgen Sie diesen Schritten:
+
+1.  **Frontend-Installation:**
+    ```bash
+    npm install
+    npm run dev
+    ```
+2.  **Backend (Supabase Edge Functions):**
+    Die Backend-Logik ist in Supabase Edge Functions implementiert und wird dort bereitgestellt. Stellen Sie sicher, dass Ihre Supabase-Projekt-URL und der `SUPABASE_ANON_KEY` in der Umgebung der Edge Functions konfiguriert sind.
 
 ## API-Dokumentation
 
-### `GET /api/recipes`
-- **Beschreibung**: Ruft eine Liste von KI-generierten Rezepten ab.
+### GET /api/recipes
+- **Beschreibung**: Ruft eine Liste von Rezepten ab, optional gefiltert nach Ernährungspräferenzen.
 - **Request**:
-  - `query` (optional, String): Suchbegriff für Rezepte.
-  - `isVegetarian` (optional, Boolean): `true` für vegetarische Rezepte.
-  - `isGlutenFree` (optional, Boolean): `true` für glutenfreie Rezepte.
-- **Response**: `Array<{ id: string, title: string, description: string, imageUrl?: string, isVegetarian: boolean, isGlutenFree: boolean, averageRating?: number }>`
+  - Query-Parameter:
+    - `isVegetarian`: `boolean` (optional, `true` für vegetarische Rezepte)
+    - `isGlutenFree`: `boolean` (optional, `true` für glutenfreie Rezepte)
+- **Response**: `Array<{ id: string; name: string; description: string; ingredients: string[]; instructions: string[]; averageRating: number; isVegetarian: boolean; isGlutenFree: boolean; }>`
 
-### `GET /api/recipes/{id}`
+### GET /api/recipes/{id}
 - **Beschreibung**: Ruft Details zu einem spezifischen Rezept ab.
-- **Request**: `{id: string}` (Rezept-ID im Pfad)
-- **Response**: `{ id: string, title: string, description: string, ingredients: string[], preparationSteps: string[], imageUrl?: string, isVegetarian: boolean, isGlutenFree: boolean, averageRating?: number }`
-
-### `POST /api/recipes/{id}/rate`
-- **Beschreibung**: Ermöglicht einem Benutzer, ein Rezept zu bewerten.
 - **Request**:
-  - `{id: string}` (Rezept-ID im Pfad)
-  - `{ rating: number }` (Bewertung von 1 bis 5)
-  - (Zusätzlich kann hier ein `userId` aus dem Authentifizierungskontext verwendet werden, um sicherzustellen, dass jeder Benutzer nur einmal bewerten kann oder seine Bewertung ändern kann.)
-- **Response**: `{ success: boolean, message: string }`
+  - Path-Parameter: `id`: `string` (ID des Rezepts)
+- **Response**: `{ id: string; name: string; description: string; ingredients: string[]; instructions: string[]; averageRating: number; isVegetarian: boolean; isGlutenFree: boolean; }`
 
-### `POST /api/generate-recipe` (intern, nur für Backend-Nutzung)
-- **Beschreibung**: Sendet eine Anfrage an den externen KI-Dienst, um ein neues Rezept zu generieren.
-- **Request**: `{ prompt: string }`
-- **Response**: `{ title: string, description: string, ingredients: string[], preparationSteps: string[], isVegetarian: boolean, isGlutenFree:
+### POST /api/recipes/generate
+- **Beschreibung**: Generiert ein neues Rezept mithilfe der KI.
+- **Request**: `{ prompt: string }` (Optional: z.B. "mediterranes Gericht mit Hähnchen")
+- **Response**: `{ id: string; name: string; description: string; ingredients: string[]; instructions: string[]; isVegetarian: boolean; isGlutenFree: boolean; }`
+
+### POST /api/recipes/{id}/rate
+- **Beschreibung**: Ermöglicht einem Nutzer, ein Rezept zu bewerten.
+- **Request**:
+  - Path-Parameter: `id`: `string` (ID des Rezepts)
+  - Body: `{ userId: string; rating: number }` (rating: 1-5)
+- **Response**: `{ success: boolean; message: string; newAverageRating: number; }`
+
+### PUT /api/recipes/{id}/rate
+- **Beschreibung**: Ermöglicht einem Nutzer, eine bestehende Bewertung zu aktualisieren
