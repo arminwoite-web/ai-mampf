@@ -1,29 +1,28 @@
 ```typescript
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { v4 as uuidv4 } from "https://deno.land/std@0.168.0/uuid/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper function to calculate average rating
-async function calculateAverageRating(supabaseClient: any, recipeId: string): Promise<number> {
-  const { data, error } = await supabaseClient
-    .from('ratings')
-    .select('rating')
-    .eq('recipe_id', recipeId);
-
-  if (error) {
-    console.error('Error fetching ratings:', error);
-    return 0;
-  }
-
-  if (data && data.length > 0) {
-    const totalRating = data.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0);
-    return parseFloat((totalRating / data.length).toFixed(1));
-  }
-  return 0;
+// Helper function to get Supabase client
+function getSupabaseClient(req: Request) {
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    {
+      global: {
+        headers: { Authorization: req.headers.get("Authorization")! },
+      },
+      auth: {
+        persistSession: false,
+      },
+    },
+  );
+  return supabaseClient;
 }
 
 serve(async (req) => {
@@ -32,77 +31,75 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
-
+    const supabaseClient = getSupabaseClient(req);
     const url = new URL(req.url);
     const path = url.pathname;
+    const method = req.method;
+
+    // Helper to get user from JWT
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    // POST /api/recipes/generate
+    if (path === '/api/recipes/generate' && method === 'POST') {
+      const { prompt, vegetarian, glutenFree } = await req.json();
+
+      // --- KI-Generierung (Mock-Up für diese Implementierung) ---
+      // In einer echten Anwendung würde hier ein API-Aufruf zu OpenAI oder einem ähnlichen Dienst erfolgen.
+      // Die Parameter 'vegetarian' und 'glutenFree' würden an die KI übergeben, um die Generierung zu steuern.
+      const generatedRecipe = {
+        id: uuidv4(),
+        title: `KI-Rezept für ${prompt}`,
+        ingredients: ["Zutat 1", "Zutat 2", "Zutat 3"],
+        instructions: ["Schritt 1", "Schritt 2", "Schritt 3"],
+        portions: Math.floor(Math.random() * 4) + 2,
+        vegetarian: vegetarian,
+        glutenFree: glutenFree,
+        averageRating: null,
+        imageUrl: null,
+      };
+
+      const { data, error } = await supabaseClient
+        .from('recipes')
+        .insert([generatedRecipe])
+        .select();
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify(data[0]), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // GET /api/recipes
-    if (path === '/api/recipes' && req.method === 'GET') {
-      let query = supabaseClient.from('recipes').select('*');
+    if (path === '/api/recipes' && method === 'GET') {
+      const vegetarianFilter = url.searchParams.get('vegetarian');
+      const glutenFreeFilter = url.searchParams.get('glutenFree');
 
-      const isVegetarian = url.searchParams.get('isVegetarian');
-      const isGlutenFree = url.searchParams.get('isGlutenFree');
+      let query = supabaseClient
+        .from('recipes')
+        .select(`
+          *,
+          average_rating:ratings(rating_value)
+        `);
 
-      if (isVegetarian === 'true') {
-        query = query.eq('is_vegetarian', true);
+      if (vegetarianFilter === 'true') {
+        query = query.eq('vegetarian', true);
       }
-      if (isGlutenFree === 'true') {
-        query = query.eq('is_gluten_free', true);
+      if (glutenFreeFilter === 'true') {
+        query = query.eq('glutenFree', true);
       }
 
       const { data: recipes, error } = await query;
 
       if (error) throw error;
 
-      // Calculate average ratings for all recipes
-      const recipesWithRatings = await Promise.all(recipes.map(async (recipe) => {
-        const averageRating = await calculateAverageRating(supabaseClient, recipe.id);
-        return { ...recipe, averageRating };
-      }));
-
-      return new Response(JSON.stringify(recipesWithRatings), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // GET /api/recipes/{id}
-    if (path.startsWith('/api/recipes/') && req.method === 'GET') {
-      const recipeId = path.split('/').pop();
-      if (!recipeId) throw new Error('Recipe ID is missing.');
-
-      const { data: recipe, error } = await supabaseClient
-        .from('recipes')
-        .select('*')
-        .eq('id', recipeId)
-        .single();
-
-      if (error) throw error;
-      if (!recipe) throw new Error('Recipe not found.');
-
-      const averageRating = await calculateAverageRating(supabaseClient, recipeId);
-
-      return new Response(JSON.stringify({ ...recipe, averageRating }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // POST /api/recipes/generate
-    if (path === '/api/recipes/generate' && req.method === 'POST') {
-      const { prompt } = await req.json();
-
-      // Placeholder for AI generation logic
-      // In a real scenario, you'd call an external AI API here
-      // For now, we'll return a mock recipe
-      const newRecipe = {
-        id: crypto.randomUUID(),
-        name: `KI-generiertes Gericht: ${prompt || 'Zufälliges Gericht'}`,
-        description: 'Eine köstliche Kreation
+      // Calculate average rating for each recipe
+      const recipesWithAvgRating = recipes.map(recipe => {
+        const ratings = recipe.average_rating.map((r: { rating_value: number }) => r.rating_value);
+        const averageRating = ratings.length > 0
+          ? parseFloat((ratings.reduce((sum: number, r: number) => sum + r, 0) / ratings.length).toFixed(1))
+          : null;
+        return {
+          ...recipe,
+          averageRating: averageRating,
+          average_rating: undefined // remove the
