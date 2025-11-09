@@ -1,11 +1,30 @@
 ```typescript
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Helper function to calculate average rating
+async function calculateAverageRating(supabaseClient: any, recipeId: string): Promise<number> {
+  const { data, error } = await supabaseClient
+    .from('ratings')
+    .select('rating')
+    .eq('recipe_id', recipeId);
+
+  if (error) {
+    console.error('Error fetching ratings:', error);
+    return 0;
+  }
+
+  if (data && data.length > 0) {
+    const totalRating = data.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0);
+    return parseFloat((totalRating / data.length).toFixed(1));
+  }
+  return 0;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -24,89 +43,66 @@ serve(async (req) => {
     );
 
     const url = new URL(req.url);
-    const pathSegments = url.pathname.split('/').filter(Boolean); // ['api', 'recipes', '123', 'rate']
+    const path = url.pathname;
 
-    // Handle GET /api/recipes or GET /api/recipes/{id}
-    if (req.method === 'GET' && pathSegments[1] === 'recipes') {
-      if (pathSegments.length === 2) { // GET /api/recipes
-        const { searchParams } = url;
-        const isVegetarian = searchParams.get('isVegetarian') === 'true';
-        const isGlutenFree = searchParams.get('isGlutenFree') === 'true';
+    // GET /api/recipes
+    if (path === '/api/recipes' && req.method === 'GET') {
+      let query = supabaseClient.from('recipes').select('*');
 
-        let query = supabaseClient.from('recipes').select(`
-          id, 
-          title, 
-          description, 
-          image_url, 
-          is_vegetarian, 
-          is_gluten_free,
-          average_rating
-        `);
+      const isVegetarian = url.searchParams.get('isVegetarian');
+      const isGlutenFree = url.searchParams.get('isGlutenFree');
 
-        if (isVegetarian) {
-          query = query.eq('is_vegetarian', true);
-        }
-        if (isGlutenFree) {
-          query = query.eq('is_gluten_free', true);
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-
-        return new Response(JSON.stringify(data.map(recipe => ({
-          id: recipe.id,
-          title: recipe.title,
-          description: recipe.description,
-          imageUrl: recipe.image_url,
-          isVegetarian: recipe.is_vegetarian,
-          isGlutenFree: recipe.is_gluten_free,
-          averageRating: recipe.average_rating,
-        }))), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-
-      } else if (pathSegments.length === 3) { // GET /api/recipes/{id}
-        const recipeId = pathSegments[2];
-        const { data, error } = await supabaseClient
-          .from('recipes')
-          .select(`
-            id, 
-            title, 
-            description, 
-            ingredients, 
-            preparation_steps, 
-            image_url, 
-            is_vegetarian, 
-            is_gluten_free,
-            average_rating
-          `)
-          .eq('id', recipeId)
-          .single();
-
-        if (error) throw error;
-        if (!data) {
-          return new Response(JSON.stringify({ error: 'Recipe not found' }), {
-            status: 404,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-
-        return new Response(JSON.stringify({
-          id: data.id,
-          title: data.title,
-          description: data.description,
-          ingredients: data.ingredients,
-          preparationSteps: data.preparation_steps,
-          imageUrl: data.image_url,
-          isVegetarian: data.is_vegetarian,
-          isGlutenFree: data.is_gluten_free,
-          averageRating: data.average_rating,
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+      if (isVegetarian === 'true') {
+        query = query.eq('is_vegetarian', true);
       }
+      if (isGlutenFree === 'true') {
+        query = query.eq('is_gluten_free', true);
+      }
+
+      const { data: recipes, error } = await query;
+
+      if (error) throw error;
+
+      // Calculate average ratings for all recipes
+      const recipesWithRatings = await Promise.all(recipes.map(async (recipe) => {
+        const averageRating = await calculateAverageRating(supabaseClient, recipe.id);
+        return { ...recipe, averageRating };
+      }));
+
+      return new Response(JSON.stringify(recipesWithRatings), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Handle POST /api/recipes/{id}/rate
-    if (req.method === 'POST' && pathSegments[1] === 'recipes
+    // GET /api/recipes/{id}
+    if (path.startsWith('/api/recipes/') && req.method === 'GET') {
+      const recipeId = path.split('/').pop();
+      if (!recipeId) throw new Error('Recipe ID is missing.');
+
+      const { data: recipe, error } = await supabaseClient
+        .from('recipes')
+        .select('*')
+        .eq('id', recipeId)
+        .single();
+
+      if (error) throw error;
+      if (!recipe) throw new Error('Recipe not found.');
+
+      const averageRating = await calculateAverageRating(supabaseClient, recipeId);
+
+      return new Response(JSON.stringify({ ...recipe, averageRating }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // POST /api/recipes/generate
+    if (path === '/api/recipes/generate' && req.method === 'POST') {
+      const { prompt } = await req.json();
+
+      // Placeholder for AI generation logic
+      // In a real scenario, you'd call an external AI API here
+      // For now, we'll return a mock recipe
+      const newRecipe = {
+        id: crypto.randomUUID(),
+        name: `KI-generiertes Gericht: ${prompt || 'Zufälliges Gericht'}`,
+        description: 'Eine köstliche Kreation
