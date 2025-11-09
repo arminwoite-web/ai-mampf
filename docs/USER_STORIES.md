@@ -1,64 +1,65 @@
 # User Stories
 
-## Story 1: Rezeptvorschläge auf Basis von KI-Generierung erhalten
-**Als** Kochbegeisterter
-**Möchte ich** KI-generierte Rezeptvorschläge sehen
-**Damit** ich neue Inspirationen für meine Mahlzeiten erhalte
+## Story 1: Rezept auf Basis von KI-Generierung erhalten
+**Als** Kochinteressierter
+**Möchte ich** KI-generierte Rezeptideen erhalten
+**Damit** ich neue und inspirierende Gerichte ausprobieren kann, ohne selbst kreativ werden zu müssen.
 
 **Akzeptanzkriterien:**
-- [ ] Die App zeigt beim Start eine Liste von KI-generierten Rezepten an.
-- [ ] Jedes Rezept enthält einen Namen, eine kurze Beschreibung und eine Liste der Zutaten.
-- [ ] Jedes Rezept enthält eine Schritt-für-Schritt-Anleitung zur Zubereitung.
-- [ ] Die generierten Rezepte sind vielfältig in Bezug auf Küche und Schwierigkeitsgrad.
+- [ ] Der Benutzer kann eine Anfrage an die KI stellen (z.B. "Rezept für ein schnelles Abendessen mit Hähnchen und Brokkoli").
+- [ ] Die App zeigt ein vollständig generiertes Rezept an, das Zutatenliste, Zubereitungsschritte und Portionsgröße umfasst.
+- [ ] Das generierte Rezept ist verständlich und umsetzbar.
 
 **Priorität:** Hoch
 
-## Story 2: Vegetarische Rezepte filtern
-**Als** Nutzer mit speziellen Ernährungspräferenzen
-**Möchte ich** Rezepte nach "vegetarisch" filtern können
-**Damit** ich nur vegetarische Gerichte angezeigt bekomme
+## Story 2: Rezepte nach Ernährungsweise filtern
+**Als** Benutzer mit speziellen Ernährungsbedürfnissen
+**Möchte ich** Rezepte nach "vegetarisch" oder "glutenfrei" filtern können
+**Damit** ich nur Rezepte angezeigt bekomme, die meinen Ernährungspräferenzen entsprechen.
 
 **Akzeptanzkriterien:**
-- [ ] Es gibt eine Filteroption für "vegetarisch".
-- [ ] Nach Anwendung des Filters werden nur Rezepte angezeigt, die als vegetarisch gekennzeichnet sind.
-- [ ] Der Filter kann aktiviert und deaktiviert werden.
+- [ ] Der Benutzer kann eine Filteroption für "vegetarisch" auswählen.
+- [ ] Der Benutzer kann eine Filteroption für "glutenfrei" auswählen.
+- [ ] Es ist möglich, beide Filter gleichzeitig anzuwenden.
+- [ ] Nach Anwendung des Filters werden nur Rezepte angezeigt, die der ausgewählten Ernährungsweise entsprechen.
+- [ ] Der Benutzer kann die Filter jederzeit wieder entfernen.
 
 **Priorität:** Hoch
 
-## Story 3: Glutenfreie Rezepte filtern
-**Als** Nutzer mit speziellen Ernährungspräferenzen
-**Möchte ich** Rezepte nach "glutenfrei" filtern können
-**Damit** ich nur glutenfreie Gerichte angezeigt bekomme
-
-**Akzeptanzkriterien:**
-- [ ] Es gibt eine Filteroption für "glutenfrei".
-- [ ] Nach Anwendung des Filters werden nur Rezepte angezeigt, die als glutenfrei gekennzeichnet sind.
-- [ ] Der Filter kann aktiviert und deaktiviert werden.
-
-**Priorität:** Hoch
-
-## Story 4: Bewertung eines Rezepts abgeben
-**Als** Nutzer
+## Story 3: Rezept bewerten
+**Als** Benutzer, der ein Rezept ausprobiert hat
 **Möchte ich** ein Rezept mit 1 bis 5 Sternen bewerten können
-**Damit** ich meine Meinung zum Rezept ausdrücken und anderen Nutzern helfen kann
+**Damit** ich meine Meinung zum Rezept teilen und anderen Nutzern bei der Auswahl helfen kann.
 
 **Akzeptanzkriterien:**
-- [ ] Auf jeder Rezeptdetailseite gibt es eine Möglichkeit, Sternebewertungen abzugeben.
-- [ ] Der Nutzer kann eine Bewertung zwischen 1 (sehr schlecht) und 5 (sehr gut) Sternen auswählen.
-- [ ] Nach Abgabe der Bewertung wird diese gespeichert und dem Rezept zugeordnet.
-- [ ] Der Nutzer kann seine eigene Bewertung ändern.
+- [ ] Auf der Detailseite eines Rezepts ist eine Möglichkeit zur Sternebewertung (1-5 Sterne) sichtbar.
+- [ ] Der Benutzer kann eine Sternebewertung abgeben.
+- [ ] Die abgegebene Bewertung wird gespeichert.
+- [ ] Der Benutzer kann seine eigene Bewertung nachträglich ändern.
 
-**Priorität:** Hoch
+**Priorität:** Mittel
 
-## Story 5: Durchschnittliche Sternebewertung eines Rezepts sehen
-**Als** Nutzer
-**Möchte ich** die durchschnittliche Sternebewertung neben der Rezept-Überschrift sehen
-**Damit** ich auf einen Blick die Beliebtheit und Qualität eines Rezepts erkennen kann
+## Story 4: Durchschnittliche Rezeptbewertung sehen
+**Als** Benutzer, der ein Rezept auswählen möchte
+**Möchte ich** die durchschnittliche Sternebewertung eines Rezepts sehen
+**Damit** ich auf einen Blick erkennen kann, wie gut andere Benutzer das Rezept bewertet haben.
 
 **Akzeptanzkriterien:**
-- [ ] Die durchschnittliche Sternebewertung wird auf der Rezeptübersichtsseite neben dem Rezepttitel angezeigt.
-- [ ] Die durchschnittliche Sternebewertung wird auf der Rezeptdetailseite neben der Rezeptüberschrift angezeigt.
-- [ ] Die Anzeige der Sternebewertung ist visuell ansprechend (z.B. durch ausgefüllte Sterne).
-- [ ] Die Bewertung wird dynamisch aktualisiert, sobald neue Bewertungen abgegeben werden.
+- [ ] Neben der Überschrift jedes Rezepts wird die durchschnittliche Sternebewertung angezeigt.
+- [ ] Die durchschnittliche Bewertung wird dynamisch aktualisiert, wenn neue Bewertungen abgegeben werden.
+- [ ] Bei neuen Rezepten ohne Bewertungen wird eine entsprechende Information oder keine Bewertung angezeigt.
 
-**Priorität:** Hoch
+**Priorität:** Mittel
+
+## Story 5: Foto eines zubereiteten Gerichts hochladen
+**Als** Benutzer, der ein Rezept ausprobiert hat
+**Möchte ich** ein Foto meines zubereiteten Gerichts hochladen können
+**Damit** ich meine Kochergebnisse teilen und andere Benutzer inspirieren kann.
+
+**Akzeptanzkriterien:**
+- [ ] Auf der Detailseite eines Rezepts gibt es eine Option zum Hochladen eines Fotos.
+- [ ] Der Benutzer kann ein Bild von seinem Gerät auswählen und hochladen.
+- [ ] Das hochgeladene Foto wird dem entsprechenden Rezept zugeordnet.
+- [ ] Andere Benutzer können die hochgeladenen Fotos sehen.
+
+**Priorität:** Mittel
