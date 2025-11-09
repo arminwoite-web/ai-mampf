@@ -1,65 +1,74 @@
-```markdown
 # System-Architektur
 
 ## Überblick
-Diese Systemarchitektur beschreibt eine App für KI-generierte Rezepte. Die App ermöglicht es Benutzern, Rezeptvorschläge basierend auf KI-Analyse zu erhalten, diese nach vegetarischen und glutenfreien Optionen zu filtern und jedes Rezept mit 1 bis 5 Sternen zu bewerten. Das System nutzt Supabase für Backend-Funktionalität und Datenbankmanagement, während das Frontend mit React, TypeScript und TailwindCSS entwickelt wird.
+Die Rezept-App ermöglicht Nutzern, KI-generierte Rezepte zu entdecken, nach spezifischen Ernährungspräferenzen (vegetarisch, glutenfrei) zu filtern und Rezepte zu bewerten. Die durchschnittliche Bewertung wird prominent angezeigt. Die Architektur setzt auf eine serverlose Backend-Lösung mit Supabase, einem modernen Frontend mit React und TypeScript und einer leistungsstarken KI-Integration für die Rezeptgenerierung.
 
 ## Komponenten
 - **Frontend**: React + TypeScript + TailwindCSS
-  - Verantwortlich für die Darstellung der Benutzeroberfläche, Interaktion mit dem Benutzer und Kommunikation mit dem Backend.
-  - Implementiert Filterfunktionen und die Anzeige von Rezeptdetails sowie die Bewertungsmechanik.
+  - Stellt die Benutzeroberfläche bereit, interagiert mit dem Backend über APIs.
+  - Implementiert Filterfunktionen und die Anzeige von Rezepten und Bewertungen.
 - **Backend**: Supabase Edge Functions
-  - Stellt die API-Endpunkte für das Frontend bereit.
-  - Verwaltet die Logik zur Generierung von Rezepten (Anbindung an KI-Dienst), Filterung und Speicherung von Bewertungen.
-  - Nutzt Supabase Authentication für potenzielle zukünftige Benutzerverwaltung.
+  - Serverlose Funktionen für die API-Endpunkte.
+  - Verwaltet die Logik für Rezeptabrufe, Filterung, Bewertung und KI-Integration.
 - **Datenbank**: PostgreSQL (Supabase)
-  - Speichert Rezeptinformationen (Titel, Beschreibung, Zutaten, Zubereitung, Bild-URL, KI-generiert, vegetarisch, glutenfrei).
-  - Speichert Benutzerbewertungen für Rezepte.
-- **KI-Dienst (extern)**: GPT-Modell (oder ähnliches)
-  - Wird vom Backend über eine API angesprochen, um Rezeptvorschläge basierend auf Anfragen zu generieren.
+  - Speichert Rezepte, Zutaten, Anleitungen, Bewertungen und Benutzerdaten.
+  - Nutzt Supabase Realtime für Echtzeit-Updates bei Bewertungen.
+- **KI-Service**: Externe AI API (z.B. OpenAI GPT-4)
+  - Generiert Rezeptvorschläge basierend auf vordefinierten Prompts oder Nutzereingaben.
+  - Wird über eine Supabase Edge Function aufgerufen.
 
 ## API-Endpunkte
 
 ### GET /api/recipes
-- **Beschreibung**: Ruft eine Liste von KI-generierten Rezepten ab.
+- **Beschreibung**: Ruft eine Liste von Rezepten ab, optional gefiltert nach Ernährungspräferenzen.
 - **Request**:
-  - `query` (optional): Suchbegriff für Rezepte.
-  - `isVegetarian` (optional): `true` für vegetarische Rezepte.
-  - `isGlutenFree` (optional): `true` für glutenfreie Rezepte.
-- **Response**: `Array<{ id: string, title: string, description: string, imageUrl?: string, isVegetarian: boolean, isGlutenFree: boolean, averageRating?: number }>`
+  - Query-Parameter:
+    - `isVegetarian`: `boolean` (optional, `true` für vegetarische Rezepte)
+    - `isGlutenFree`: `boolean` (optional, `true` für glutenfreie Rezepte)
+- **Response**: `Array<{ id: string; name: string; description: string; ingredients: string[]; instructions: string[]; averageRating: number; isVegetarian: boolean; isGlutenFree: boolean; }>`
 
 ### GET /api/recipes/{id}
 - **Beschreibung**: Ruft Details zu einem spezifischen Rezept ab.
-- **Request**: `{id: string}` (Rezept-ID im Pfad)
-- **Response**: `{ id: string, title: string, description: string, ingredients: string[], preparationSteps: string[], imageUrl?: string, isVegetarian: boolean, isGlutenFree: boolean, averageRating?: number }`
+- **Request**:
+  - Path-Parameter: `id`: `string` (ID des Rezepts)
+- **Response**: `{ id: string; name: string; description: string; ingredients: string[]; instructions: string[]; averageRating: number; isVegetarian: boolean; isGlutenFree: boolean; }`
+
+### POST /api/recipes/generate
+- **Beschreibung**: Generiert ein neues Rezept mithilfe der KI.
+- **Request**: `{ prompt: string }` (Optional: z.B. "mediterranes Gericht mit Hähnchen")
+- **Response**: `{ id: string; name: string; description: string; ingredients: string[]; instructions: string[]; isVegetarian: boolean; isGlutenFree: boolean; }`
 
 ### POST /api/recipes/{id}/rate
-- **Beschreibung**: Ermöglicht einem Benutzer, ein Rezept zu bewerten.
+- **Beschreibung**: Ermöglicht einem Nutzer, ein Rezept zu bewerten.
 - **Request**:
-  - `{id: string}` (Rezept-ID im Pfad)
-  - `{ rating: number }` (Bewertung von 1 bis 5)
-  - (Zusätzlich kann hier ein `userId` aus dem Authentifizierungskontext verwendet werden, um sicherzustellen, dass jeder Benutzer nur einmal bewerten kann oder seine Bewertung ändern kann.)
-- **Response**: `{ success: boolean, message: string }`
+  - Path-Parameter: `id`: `string` (ID des Rezepts)
+  - Body: `{ userId: string; rating: number }` (rating: 1-5)
+- **Response**: `{ success: boolean; message: string; newAverageRating: number; }`
 
-### POST /api/generate-recipe (intern, nur für Backend-Nutzung)
-- **Beschreibung**: Sendet eine Anfrage an den externen KI-Dienst, um ein neues Rezept zu generieren.
-- **Request**: `{ prompt: string }`
-- **Response**: `{ title: string, description: string, ingredients: string[], preparationSteps: string[], isVegetarian: boolean, isGlutenFree: boolean }`
+### PUT /api/recipes/{id}/rate
+- **Beschreibung**: Ermöglicht einem Nutzer, eine bestehende Bewertung zu aktualisieren.
+- **Request**:
+  - Path-Parameter: `id`: `string` (ID des Rezepts)
+  - Body: `{ userId: string; rating: number }` (rating: 1-5)
+- **Response**: `{ success: boolean; message: string; newAverageRating: number; }`
 
-## Datenflüsse
+## Datenbank-Schema
 
-1. **Rezeptanzeige und Filterung:**
-   - Frontend sendet `GET /api/recipes` mit optionalen Filtern (`isVegetarian`, `isGlutenFree`).
-   - Backend ruft Rezepte aus der PostgreSQL-Datenbank ab, wendet Filter an und gibt die gefilterte Liste zurück.
-   - Frontend rendert die Liste der Rezepte.
+```sql
+-- Tabelle für Rezepte
+CREATE TABLE recipes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  description TEXT,
+  ingredients TEXT[] NOT NULL, -- Array von Zutaten-Strings
+  instructions TEXT[] NOT NULL, -- Array von Anweisungs-Strings
+  is_vegetarian BOOLEAN DEFAULT FALSE,
+  is_gluten_free BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-2. **Rezeptdetails:**
-   - Benutzer klickt auf ein Rezept im Frontend.
-   - Frontend sendet `GET /api/recipes/{id}`.
-   - Backend ruft die detaillierten Rezeptinformationen aus der Datenbank ab und gibt sie zurück.
-   - Frontend zeigt die Details an.
-
-3. **Rezeptbewertung:**
-   - Benutzer wählt eine Sternebewertung auf der Rezeptdetailseite.
-   - Frontend sendet `POST /api/recipes/{id}/rate` mit der gewählten Bewertung.
-   - Backend spe
+-- Tabelle für Bewertungen
+CREATE TABLE ratings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipe_id UUID REFERENCES recipes(id) ON DELETE CASCADE,
+  user_id UUID, -- Annahme: Benutzer-ID aus Supabase Auth
