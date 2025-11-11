@@ -49,4 +49,3 @@ export const RecipeFilter: React.FC<RecipeFilterProps> = ({ onFilterChange, init
     </div>
   );
 };
-```
