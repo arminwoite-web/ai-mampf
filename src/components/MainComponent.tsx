@@ -30,7 +30,9 @@ export const RecipeFilter: React.FC<RecipeFilterProps> = ({ onFilterChange, init
         <Checkbox
           id="vegetarian"
           checked={isVegetarian}
-          onCheckedChange={(checked) => handleVegetarianChange(checked as boolean)}
+          onCheckedChange={(checked: boolean) =>
+            handleVegetarianChange(checked)
+          }
         />
         <Label htmlFor="vegetarian" className="text-gray-700">
           Vegetarisch
@@ -40,7 +42,8 @@ export const RecipeFilter: React.FC<RecipeFilterProps> = ({ onFilterChange, init
         <Checkbox
           id="gluten-free"
           checked={isGlutenFree}
-          onCheckedChange={(checked) => handleGlutenFreeChange(checked as boolean)}
+          onCheckedChange={(checked: boolean) => handleGlutenFreeChange(checked)
+          }
         />
         <Label htmlFor="gluten-free" className="text-gray-700">
           Glutenfrei
